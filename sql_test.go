@@ -1,53 +1,11 @@
-package sql_test
+package sample_sql_tools
 
 import (
 	"database/sql"
-	"log"
 	"testing"
-
-	_ "github.com/lib/pq"
 )
 
-func createConn() *sql.DB {
-	db, err := sql.Open("postgres", "user=pgtest dbname=pgtest sslmode=disable")
-	if err != nil {
-		log.Fatal(err)
-	}
-	return db
-}
-
-func setup(db *sql.DB) error {
-	_, err := db.Exec(`
-	CREATE TABLE account (
-	  id SERIAL PRIMARY KEY
-	  ,name TEXT NOT NULL
-	  ,dob DATE NOT NULL
-	);
-	CREATE TABLE note (
-	  id SERIAL PRIMARY KEY
-	  ,account_id INTEGER NOT NULL
-	  ,title TEXT NOT NULL
-	  ,body TEXT NOT NULL
-	);
-	`)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func teardown(db *sql.DB) error {
-	_, err := db.Exec(`
-	DROP TABLE account;
-	DROP TABLE note;
-	`)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func insertData(db *sql.DB) error {
+func insertDataSimple(db *sql.DB) error {
 	_, err := db.Exec(`
 	INSERT INTO account (name, dob) VALUES ('moqada', '1985/11/01');
 	INSERT INTO account (name, dob) VALUES ('8maki', '1985/04/01');
@@ -64,7 +22,7 @@ func insertData(db *sql.DB) error {
 	return nil
 }
 
-func TestPingDB(t *testing.T) {
+func TestSimplePingDB(t *testing.T) {
 	db := createConn()
 	err := db.Ping()
 	if err != nil {
@@ -72,23 +30,23 @@ func TestPingDB(t *testing.T) {
 	}
 }
 
-func TestCreateDropTable(t *testing.T) {
+func TestSimpleCreateDropTable(t *testing.T) {
 	db := createConn()
-	err := setup(db)
-	defer teardown(db)
+	err := setUp(db)
+	defer tearDown(db)
 	if err != nil {
 		t.Errorf("failed to create table: %s", err)
 	}
 }
 
-func TestInsertData(t *testing.T) {
+func TestSimpleInsertData(t *testing.T) {
 	db := createConn()
-	err := setup(db)
-	defer teardown(db)
+	err := setUp(db)
+	defer tearDown(db)
 	if err != nil {
 		t.Errorf("failed to create table: %s", err)
 	}
-	err = insertData(db)
+	err = insertDataSimple(db)
 	if err != nil {
 		t.Errorf("failed to insert data: %s", err)
 	}
@@ -96,12 +54,12 @@ func TestInsertData(t *testing.T) {
 
 func TestSimpleSelectData(t *testing.T) {
 	db := createConn()
-	err := setup(db)
-	defer teardown(db)
+	err := setUp(db)
+	defer tearDown(db)
 	if err != nil {
 		t.Errorf("failed to create table: %s", err)
 	}
-	err = insertData(db)
+	err = insertDataSimple(db)
 	if err != nil {
 		t.Errorf("failed to insert data: %s", err)
 	}
@@ -110,7 +68,7 @@ func TestSimpleSelectData(t *testing.T) {
 		id   int
 		name string
 	)
-	rows, err := db.Query(`select id, name from account;`)
+	rows, err := db.Query(`SELECT id, name FROM account;`)
 	if err != nil {
 		t.Errorf("failed to select: %s", err)
 	}
@@ -124,10 +82,10 @@ func TestSimpleSelectData(t *testing.T) {
 	}
 }
 
-func TestSimpleWhereSelectData(t *testing.T) {
+func TestSimplJoinSelectData(t *testing.T) {
 	db := createConn()
-	err := setup(db)
-	defer teardown(db)
+	err := setUp(db)
+	defer tearDown(db)
 	if err != nil {
 		t.Fatalf("failed to create table: %s", err)
 	}
@@ -147,7 +105,6 @@ func TestSimpleWhereSelectData(t *testing.T) {
 	}
 
 	for _, d := range testData {
-		t.Logf("userId %d expected num titles %d", d.userId, d.titleCount)
 		rows, err := db.Query(`
 		SELECT
 		  a.id

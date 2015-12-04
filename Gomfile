@@ -1,1 +1,2 @@
 gom "github.com/lib/pq"
+gom "github.com/Masterminds/squirrel"
