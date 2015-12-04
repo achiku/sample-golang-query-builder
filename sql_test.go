@@ -132,6 +132,11 @@ func TestSimpleWhereSelectData(t *testing.T) {
 		t.Fatalf("failed to create table: %s", err)
 	}
 
+	var (
+		userId     int
+		titleCount int
+	)
+
 	var testData = []struct {
 		userId     int
 		titleCount int
@@ -141,28 +146,18 @@ func TestSimpleWhereSelectData(t *testing.T) {
 		{3, 0},
 	}
 
-	var (
-		userId     int
-		titleCount int
-	)
-	stmt, err := db.Prepare(`
-	SELECT
-	  a.id
-	  ,count(n.title)
-    FROM account a
-	LEFT OUTER JOIN note n
-	ON a.id = n.account_id
-	WHERE a.id = $1
-	GROUP BY a.id
-	`)
-	if err != nil {
-		t.Fatal("failed to create stmt: %s", err)
-	}
-	t.Logf("stmt: %v", stmt)
-
 	for _, d := range testData {
 		t.Logf("userId %d expected num titles %d", d.userId, d.titleCount)
-		rows, err := stmt.Query(d.userId)
+		rows, err := db.Query(`
+		SELECT
+		  a.id
+		  ,count(n.title)
+		FROM account a
+		LEFT OUTER JOIN note n
+		ON a.id = n.account_id
+		WHERE a.id = $1
+		GROUP BY a.id
+		`, d.userId)
 		if err != nil {
 			t.Fatalf("failed to select: %s", err)
 		}
