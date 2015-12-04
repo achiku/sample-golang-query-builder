@@ -8,7 +8,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func createDB() *sql.DB {
+func createConn() *sql.DB {
 	db, err := sql.Open("postgres", "user=pgtest dbname=pgtest sslmode=disable")
 	if err != nil {
 		log.Fatal(err)
@@ -16,7 +16,7 @@ func createDB() *sql.DB {
 	return db
 }
 
-func createTable(db *sql.DB) error {
+func setup(db *sql.DB) error {
 	_, err := db.Exec(`
 	CREATE TABLE account (
 	  id SERIAL PRIMARY KEY
@@ -36,7 +36,7 @@ func createTable(db *sql.DB) error {
 	return nil
 }
 
-func dropTable(db *sql.DB) error {
+func teardown(db *sql.DB) error {
 	_, err := db.Exec(`
 	DROP TABLE account;
 	DROP TABLE note;
@@ -52,6 +52,11 @@ func insertData(db *sql.DB) error {
 	INSERT INTO account (name, dob) VALUES ('moqada', '1985/11/01');
 	INSERT INTO account (name, dob) VALUES ('8maki', '1985/04/01');
 	INSERT INTO account (name, dob) VALUES ('ideyuta', '1988/04/01');
+
+	INSERT INTO note (account_id, title, body) VALUES (1, 'test title 01', 'test body');
+	INSERT INTO note (account_id, title, body) VALUES (1, 'test title 02', 'test body');
+	INSERT INTO note (account_id, title, body) VALUES (1, 'test title 03', 'test body');
+	INSERT INTO note (account_id, title, body) VALUES (2, 'test title 01', 'test body');
 	`)
 	if err != nil {
 		return err
@@ -60,7 +65,7 @@ func insertData(db *sql.DB) error {
 }
 
 func TestPingDB(t *testing.T) {
-	db := createDB()
+	db := createConn()
 	err := db.Ping()
 	if err != nil {
 		t.Errorf("ping failed: %s", err)
@@ -68,20 +73,18 @@ func TestPingDB(t *testing.T) {
 }
 
 func TestCreateDropTable(t *testing.T) {
-	db := createDB()
-	err := createTable(db)
+	db := createConn()
+	err := setup(db)
+	defer teardown(db)
 	if err != nil {
 		t.Errorf("failed to create table: %s", err)
-	}
-	err = dropTable(db)
-	if err != nil {
-		t.Errorf("failed to drop table: %s", err)
 	}
 }
 
 func TestInsertData(t *testing.T) {
-	db := createDB()
-	err := createTable(db)
+	db := createConn()
+	err := setup(db)
+	defer teardown(db)
 	if err != nil {
 		t.Errorf("failed to create table: %s", err)
 	}
@@ -89,15 +92,12 @@ func TestInsertData(t *testing.T) {
 	if err != nil {
 		t.Errorf("failed to insert data: %s", err)
 	}
-	err = dropTable(db)
-	if err != nil {
-		t.Errorf("failed to drop table: %s", err)
-	}
 }
 
-func TestSelectData(t *testing.T) {
-	db := createDB()
-	err := createTable(db)
+func TestSimpleSelectData(t *testing.T) {
+	db := createConn()
+	err := setup(db)
+	defer teardown(db)
 	if err != nil {
 		t.Errorf("failed to create table: %s", err)
 	}
@@ -122,9 +122,59 @@ func TestSelectData(t *testing.T) {
 		}
 		t.Logf("id: %d, name: %s", id, name)
 	}
+}
 
-	err = dropTable(db)
+func TestSimpleWhereSelectData(t *testing.T) {
+	db := createConn()
+	err := setup(db)
+	defer teardown(db)
 	if err != nil {
-		t.Errorf("failed to drop table: %s", err)
+		t.Fatalf("failed to create table: %s", err)
+	}
+
+	var testData = []struct {
+		userId     int
+		titleCount int
+	}{
+		{1, 3},
+		{2, 1},
+		{3, 0},
+	}
+
+	var (
+		userId     int
+		titleCount int
+	)
+	stmt, err := db.Prepare(`
+	SELECT
+	  a.id
+	  ,count(n.title)
+    FROM account a
+	LEFT OUTER JOIN note n
+	ON a.id = n.account_id
+	WHERE a.id = $1
+	GROUP BY a.id
+	`)
+	if err != nil {
+		t.Fatal("failed to create stmt: %s", err)
+	}
+	t.Logf("stmt: %v", stmt)
+
+	for _, d := range testData {
+		t.Logf("userId %d expected num titles %d", d.userId, d.titleCount)
+		rows, err := stmt.Query(d.userId)
+		if err != nil {
+			t.Fatalf("failed to select: %s", err)
+		}
+		defer rows.Close()
+		for rows.Next() {
+			err := rows.Scan(&userId, &titleCount)
+			if err != nil {
+				t.Fatalf("failed to scan row: %s")
+			}
+			if titleCount != d.titleCount {
+				t.Errorf("expected %d, but got %d", d.titleCount, titleCount)
+			}
+		}
 	}
 }
