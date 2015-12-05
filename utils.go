@@ -25,8 +25,8 @@ func setUp(db *sql.DB) error {
 	CREATE TABLE note (
 	  id SERIAL PRIMARY KEY
 	  ,account_id INTEGER NOT NULL
-	  ,title TEXT NOT NULL
-	  ,body TEXT NOT NULL
+	  ,title TEXT
+	  ,body TEXT
 	);
 	`)
 	if err != nil {

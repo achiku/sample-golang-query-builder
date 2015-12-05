@@ -9,14 +9,6 @@ import (
 
 var psql = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
-func TestSquirrelPingDB(t *testing.T) {
-	db := createConn()
-	err := db.Ping()
-	if err != nil {
-		t.Errorf("ping failed: %s", err)
-	}
-}
-
 func insertDataSquirrel(db *sql.DB) error {
 	sql, args, err := psql.Insert("").
 		Into("account").
@@ -50,6 +42,14 @@ func insertDataSquirrel(db *sql.DB) error {
 	}
 
 	return nil
+}
+
+func TestSquirrelPingDB(t *testing.T) {
+	db := createConn()
+	err := db.Ping()
+	if err != nil {
+		t.Errorf("ping failed: %s", err)
+	}
 }
 
 func TestInsertDataSquirrel(t *testing.T) {
