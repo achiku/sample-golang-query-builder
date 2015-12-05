@@ -114,6 +114,8 @@ func TestSelectJoinDataSquirrel(t *testing.T) {
 		t.Errorf("failed to insert data: %s", err)
 	}
 
+	// http://stackoverflow.com/questions/28642838/how-do-i-handle-nil-return-values-from-database
+	// handling null string
 	var (
 		id    int
 		name  string
@@ -127,6 +129,48 @@ func TestSelectJoinDataSquirrel(t *testing.T) {
 
 	t.Logf("sql:%s", sql)
 	rows, err := db.Query(sql)
+	if err != nil {
+		t.Errorf("failed to select: %s", err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		err := rows.Scan(&id, &name, &title)
+		if err != nil {
+			t.Errorf("failed to scan row: %s", rows.Err())
+			t.Errorf("failed to scan row: %s", err)
+		}
+		t.Logf("%d, %s, %s", id, name, title)
+	}
+}
+
+func TestPlaceholderSelectDataSquirrel(t *testing.T) {
+	db := createConn()
+	err := setUp(db)
+	defer tearDown(db)
+	if err != nil {
+		t.Errorf("failed to create table: %s", err)
+	}
+	err = insertDataSquirrel(db)
+	if err != nil {
+		t.Errorf("failed to insert data: %s", err)
+	}
+
+	userName := "moqada"
+	var (
+		id    int
+		name  string
+		title sql.NullString
+	)
+	sql, args, _ := psql.Select("a.id, a.name, n.title").
+		From("account a").
+		LeftJoin("note n ON a.id = n.account_id").
+		Where(sq.Eq{"a.name": userName}).
+		OrderBy("n.id DESC").
+		ToSql()
+
+	t.Logf("sql:%s", sql)
+	t.Logf("arg:%s", args)
+	rows, err := db.Query(sql, args...)
 	if err != nil {
 		t.Errorf("failed to select: %s", err)
 	}
