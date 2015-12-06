@@ -169,3 +169,60 @@ func TestDbrInsertDataValues(t *testing.T) {
 		t.Errorf("failed to insert: %s", err)
 	}
 }
+
+func TestDbrSelectData(t *testing.T) {
+	db := createConn()
+	err := setUp(db)
+	defer tearDown(db)
+	if err != nil {
+		t.Errorf("failed to create table: %s", err)
+	}
+
+	conn := createDbrConn()
+	err = insertDataDbrValues(conn)
+	if err != nil {
+		t.Errorf("failed to insert: %s", err)
+	}
+
+	sess := conn.NewSession(nil)
+	var accounts []Account
+	sess.Select("id, name, dob").
+		From("account").
+		LoadStructs(&accounts)
+	for _, account := range accounts {
+		t.Logf("%s", account)
+	}
+}
+
+func TestDbrSelectJoinData(t *testing.T) {
+	db := createConn()
+	err := setUp(db)
+	defer tearDown(db)
+	if err != nil {
+		t.Errorf("failed to create table: %s", err)
+	}
+
+	conn := createDbrConn()
+	err = insertDataDbrValues(conn)
+	if err != nil {
+		t.Errorf("failed to insert: %s", err)
+	}
+
+	sess := conn.NewSession(nil)
+	type NoteList struct {
+		Id    dbr.NullInt64
+		Title dbr.NullString
+		Name  string
+	}
+	var notes []NoteList
+	_, err = sess.Select("note.id, note.title, account.name").
+		From("account").
+		LeftJoin("note", "account.id = note.account_id").
+		Load(&notes)
+	if err != nil {
+		t.Errorf("failed to select: ", err)
+	}
+	for _, note := range notes {
+		t.Logf("%s", note)
+	}
+}
