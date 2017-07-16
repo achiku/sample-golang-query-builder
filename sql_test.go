@@ -130,3 +130,17 @@ func TestSimplJoinSelectData(t *testing.T) {
 		}
 	}
 }
+
+func TestSimpleSelectNamedPlaceholder(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	// not supported
+	var i int64
+	err := db.QueryRow(`
+	select id from account where name = $1
+	`, sql.Named("name", "moqada")).Scan(&i)
+	if err != nil {
+		t.Fatal(err)
+	}
+}

@@ -6,11 +6,13 @@ import (
 	sq "github.com/elgris/sqrl"
 )
 
+var psq = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+
 func TestSqrlSimpleSelect(t *testing.T) {
 	db, cleanup := setupTestDB(t)
 	defer cleanup()
 
-	q := sq.Select(
+	q := psq.Select(
 		"id",
 		"name",
 	).From("account").
