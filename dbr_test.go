@@ -1,4 +1,4 @@
-package sample_sql_tools
+package samplequerybuilder
 
 import (
 	"log"
@@ -7,19 +7,6 @@ import (
 
 	"github.com/gocraft/dbr"
 )
-
-type Account struct {
-	Id   int64
-	Name string
-	Dob  time.Time
-}
-
-type Note struct {
-	Id        int64
-	AccountId int64
-	Title     dbr.NullString
-	Body      dbr.NullString
-}
 
 func createDbrConn() *dbr.Connection {
 	conn, err := dbr.Open("postgres", "user=pgtest dbname=pgtest sslmode=disable", nil)
@@ -42,10 +29,9 @@ func insertDataDbrValues(conn *dbr.Connection) error {
 		Exec()
 	if err != nil {
 		return err
-	} else {
-		count, _ := result.RowsAffected()
-		log.Printf("%d rows created\n", count)
 	}
+	count, _ := result.RowsAffected()
+	log.Printf("%d rows created\n", count)
 	result, err = sess.InsertInto("note").
 		Columns("account_id", "title", "body").
 		Values(1, "test title 01", "test body").
@@ -55,10 +41,9 @@ func insertDataDbrValues(conn *dbr.Connection) error {
 		Exec()
 	if err != nil {
 		return err
-	} else {
-		count, _ := result.RowsAffected()
-		log.Printf("%d rows created\n", count)
 	}
+	count, _ = result.RowsAffected()
+	log.Printf("%d rows created\n", count)
 
 	return nil
 }
@@ -88,28 +73,27 @@ func insertDataDbrRecord(conn *dbr.Connection) error {
 		Exec()
 	if err != nil {
 		return err
-	} else {
-		count, _ := result.RowsAffected()
-		log.Printf("%d rows created\n", count)
 	}
+	count, _ := result.RowsAffected()
+	log.Printf("%d rows created\n", count)
 
 	note1 := Note{
-		AccountId: 1,
+		AccountID: 1,
 		Title:     dbr.NewNullString("test title 01"),
 		Body:      dbr.NewNullString("test body"),
 	}
 	note2 := Note{
-		AccountId: 1,
+		AccountID: 1,
 		Title:     dbr.NewNullString("test title 02"),
 		Body:      dbr.NewNullString("test body"),
 	}
 	note3 := Note{
-		AccountId: 1,
+		AccountID: 1,
 		Title:     dbr.NewNullString("test title 03"),
 		Body:      dbr.NewNullString("test body"),
 	}
 	note4 := Note{
-		AccountId: 2,
+		AccountID: 2,
 		Title:     dbr.NewNullString("test title 01"),
 		Body:      dbr.NewNullString("test body"),
 	}
@@ -122,10 +106,9 @@ func insertDataDbrRecord(conn *dbr.Connection) error {
 		Exec()
 	if err != nil {
 		return err
-	} else {
-		count, _ := result.RowsAffected()
-		log.Printf("%d rows created\n", count)
 	}
+	count, _ = result.RowsAffected()
+	log.Printf("%d rows created\n", count)
 
 	return nil
 }
@@ -135,7 +118,7 @@ func TestDbrPingDB(t *testing.T) {
 	db := createConn()
 	err := db.Ping()
 	if err != nil {
-		t.Errorf("%s", conn)
+		t.Errorf("%v", conn)
 		t.Errorf("ping failed: %s", err)
 	}
 }
@@ -190,7 +173,7 @@ func TestDbrSelectData(t *testing.T) {
 		From("account").
 		LoadStructs(&accounts)
 	for _, account := range accounts {
-		t.Logf("%s", account)
+		t.Logf("%v", account)
 	}
 }
 
@@ -210,7 +193,7 @@ func TestDbrSelectJoinData(t *testing.T) {
 
 	sess := conn.NewSession(nil)
 	type NoteList struct {
-		Id    dbr.NullInt64
+		ID    dbr.NullInt64
 		Title dbr.NullString
 		Name  string
 	}
@@ -220,9 +203,9 @@ func TestDbrSelectJoinData(t *testing.T) {
 		LeftJoin("note", "account.id = note.account_id").
 		Load(&notes)
 	if err != nil {
-		t.Errorf("failed to select: ", err)
+		t.Errorf("failed to select: %s", err)
 	}
 	for _, note := range notes {
-		t.Logf("%s", note)
+		t.Logf("%v", note)
 	}
 }

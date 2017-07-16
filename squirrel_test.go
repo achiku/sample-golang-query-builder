@@ -1,4 +1,4 @@
-package sample_sql_tools
+package samplequerybuilder
 
 import (
 	"database/sql"
@@ -96,7 +96,7 @@ func TestSelectDataSquirrel(t *testing.T) {
 	for rows.Next() {
 		err := rows.Scan(&id, &name)
 		if err != nil {
-			t.Fatalf("failed to scan row: %s")
+			t.Fatalf("failed to scan row: %s", err)
 		}
 		t.Logf("%d, %s", id, name)
 	}
@@ -139,7 +139,7 @@ func TestSelectJoinDataSquirrel(t *testing.T) {
 			t.Errorf("failed to scan row: %s", rows.Err())
 			t.Errorf("failed to scan row: %s", err)
 		}
-		t.Logf("%d, %s, %s", id, name, title)
+		t.Logf("%d, %s, %s", id, name, title.String)
 	}
 }
 
@@ -181,6 +181,6 @@ func TestPlaceholderSelectDataSquirrel(t *testing.T) {
 			t.Errorf("failed to scan row: %s", rows.Err())
 			t.Errorf("failed to scan row: %s", err)
 		}
-		t.Logf("%d, %s, %s", id, name, title)
+		t.Logf("%d, %s, %s", id, name, title.String)
 	}
 }

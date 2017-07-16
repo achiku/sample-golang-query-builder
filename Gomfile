@@ -1,3 +1,5 @@
 gom "github.com/lib/pq"
 gom "github.com/Masterminds/squirrel"
 gom "github.com/gocraft/dbr"
+gom "github.com/elgris/sqrl"
+gom "github.com/doug-martin/goqu"

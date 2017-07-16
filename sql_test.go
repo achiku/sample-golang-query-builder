@@ -1,4 +1,4 @@
-package sample_sql_tools
+package samplequerybuilder
 
 import (
 	"database/sql"
@@ -91,12 +91,12 @@ func TestSimplJoinSelectData(t *testing.T) {
 	}
 
 	var (
-		userId     int
+		userID     int
 		titleCount int
 	)
 
 	var testData = []struct {
-		userId     int
+		userID     int
 		titleCount int
 	}{
 		{1, 3},
@@ -114,15 +114,15 @@ func TestSimplJoinSelectData(t *testing.T) {
 		ON a.id = n.account_id
 		WHERE a.id = $1
 		GROUP BY a.id
-		`, d.userId)
+		`, d.userID)
 		if err != nil {
 			t.Fatalf("failed to select: %s", err)
 		}
 		defer rows.Close()
 		for rows.Next() {
-			err := rows.Scan(&userId, &titleCount)
+			err := rows.Scan(&userID, &titleCount)
 			if err != nil {
-				t.Fatalf("failed to scan row: %s")
+				t.Fatalf("failed to scan row: %s", err)
 			}
 			if titleCount != d.titleCount {
 				t.Errorf("expected %d, but got %d", d.titleCount, titleCount)
