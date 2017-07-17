@@ -104,6 +104,7 @@ func setupTestDB(t *testing.T) (*sql.DB, func()) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	createTestData(t, db)
 	return db, func() {
 		_, err := db.Exec(`
 		DROP TABLE account;

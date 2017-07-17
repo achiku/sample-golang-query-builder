@@ -26,7 +26,7 @@ func TestSqrlSimpleSelect(t *testing.T) {
 	t.Logf("args=%+v", args)
 
 	var ac Account
-	err = db.QueryRow(sqlStr, args).Scan(&ac.ID, &ac.Name)
+	err = db.QueryRow(sqlStr, "moqada").Scan(&ac.ID, &ac.Name)
 	if err != nil {
 		t.Fatal(err)
 	}
